@@ -27,6 +27,7 @@ async def lifespan(app: FastAPI):
     print(f"📝 Nome: {settings.APP_NAME}")
     print(f"📌 Versão: {settings.APP_VERSION}")
     print(f"🔧 Debug: {settings.DEBUG}")
+    print("CORS carregado:", settings.get_cors_origins())
 
     # Criar tabelas (apenas em desenvolvimento - use Alembic em produção)
     if settings.DEBUG:
@@ -84,7 +85,7 @@ app = FastAPI(
 # Configurar CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.CORS_ORIGINS,
+    allow_origins=settings.get_cors_origins(),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

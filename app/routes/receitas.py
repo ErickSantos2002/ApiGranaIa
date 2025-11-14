@@ -62,7 +62,7 @@ async def create_receita(
 async def list_receitas(
     page: int = Query(default=1, ge=1, description="Número da página"),
     page_size: int = Query(default=20, ge=1, le=100, description="Itens por página"),
-    usuario_id: Optional[UUID] = Query(None, description="Filtrar por ID do usuário"),
+    usuario: Optional[str] = Query(None, description="Filtrar por remotejid do usuário"),
     categoria: Optional[str] = Query(None, description="Filtrar por categoria"),
     data_inicio: Optional[datetime] = Query(None, description="Data de início do período"),
     data_fim: Optional[datetime] = Query(None, description="Data de fim do período"),
@@ -74,7 +74,7 @@ async def list_receitas(
     Lista receitas com suporte a filtros e paginação.
 
     **Filtros disponíveis:**
-    - **usuario_id**: Filtrar por ID do usuário
+    - **usuario**: Filtrar por remotejid do usuário
     - **categoria**: Busca parcial na categoria
     - **data_inicio**: Data de início do período
     - **data_fim**: Data de fim do período
@@ -87,7 +87,7 @@ async def list_receitas(
         db=db,
         skip=pagination.offset,
         limit=pagination.limit,
-        usuario_id=usuario_id,
+        usuario=usuario,
         categoria=categoria,
         data_inicio=data_inicio,
         data_fim=data_fim,
@@ -113,7 +113,7 @@ async def list_receitas(
     description="Retorna estatísticas e resumo de receitas"
 )
 async def get_receitas_dashboard(
-    usuario_id: Optional[UUID] = Query(None, description="Filtrar por ID do usuário"),
+    usuario: Optional[str] = Query(None, description="Filtrar por remotejid do usuário"),
     data_inicio: Optional[datetime] = Query(None, description="Data de início do período"),
     data_fim: Optional[datetime] = Query(None, description="Data de fim do período"),
     db: AsyncSession = Depends(get_db)
@@ -128,13 +128,13 @@ async def get_receitas_dashboard(
     - Período consultado
 
     **Filtros disponíveis:**
-    - **usuario_id**: Filtrar por ID do usuário
+    - **usuario**: Filtrar por remotejid do usuário
     - **data_inicio**: Data de início do período
     - **data_fim**: Data de fim do período
     """
     dashboard = await ReceitaService.get_dashboard(
         db=db,
-        usuario_id=usuario_id,
+        usuario=usuario,
         data_inicio=data_inicio,
         data_fim=data_fim,
     )

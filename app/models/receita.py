@@ -24,29 +24,34 @@ class Receita(Base):
         nullable=False
     )
     usuario = Column(
-        UUID(as_uuid=True),
-        ForeignKey("usuarios.id", ondelete="CASCADE"),
+        Text,
+        ForeignKey("usuarios.remotejid", ondelete="CASCADE"),
         nullable=False,
         index=True
     )
     descricao = Column(Text, nullable=False)
     valor = Column(Numeric(precision=12, scale=2), nullable=False)
     categoria = Column(Text, nullable=False, index=True)
-    data = Column(DateTime(timezone=True), nullable=False)
+    origem = Column(Text, nullable=True)
+    data = Column(DateTime(timezone=True), server_default=func.now(), nullable=True)
     created_at = Column(
         DateTime(timezone=True),
         server_default=func.now(),
-        nullable=False
+        nullable=True
     )
     updated_at = Column(
         DateTime(timezone=True),
         server_default=func.now(),
         onupdate=func.now(),
-        nullable=False
+        nullable=True
     )
 
     # Relacionamento
-    usuario_rel = relationship("Usuario", back_populates="receitas")
+    usuario_rel = relationship(
+        "Usuario",
+        back_populates="receitas",
+        foreign_keys=[usuario]
+    )
 
     # Índices adicionais
     __table_args__ = (

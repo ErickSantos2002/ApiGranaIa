@@ -37,12 +37,12 @@ class ReceitaService:
             NotFoundException: Se usuário não encontrado
         """
         # Verifica se usuário existe
-        stmt = select(Usuario).where(Usuario.id == receita_data.usuario)
+        stmt = select(Usuario).where(Usuario.remotejid == receita_data.usuario)
         result = await db.execute(stmt)
         usuario = result.scalar_one_or_none()
 
         if not usuario:
-            raise NotFoundException(f"Usuário com ID {receita_data.usuario} não encontrado")
+            raise NotFoundException(f"Usuário com remotejid '{receita_data.usuario}' não encontrado")
 
         # Cria a receita
         receita = Receita(**receita_data.model_dump())
@@ -81,7 +81,7 @@ class ReceitaService:
         db: AsyncSession,
         skip: int = 0,
         limit: int = 20,
-        usuario_id: Optional[UUID] = None,
+        usuario: Optional[str] = None,
         categoria: Optional[str] = None,
         data_inicio: Optional[datetime] = None,
         data_fim: Optional[datetime] = None,
@@ -95,7 +95,7 @@ class ReceitaService:
             db: Sessão do banco de dados
             skip: Número de registros para pular
             limit: Limite de registros
-            usuario_id: Filtro por ID do usuário
+            usuario: Filtro por remotejid do usuário
             categoria: Filtro por categoria
             data_inicio: Data de início do período
             data_fim: Data de fim do período
@@ -112,8 +112,8 @@ class ReceitaService:
         # Aplicar filtros
         conditions = []
 
-        if usuario_id:
-            conditions.append(Receita.usuario == usuario_id)
+        if usuario:
+            conditions.append(Receita.usuario == usuario)
 
         if categoria:
             conditions.append(Receita.categoria.ilike(f"%{categoria}%"))
@@ -199,7 +199,7 @@ class ReceitaService:
     @staticmethod
     async def get_dashboard(
         db: AsyncSession,
-        usuario_id: Optional[UUID] = None,
+        usuario: Optional[str] = None,
         data_inicio: Optional[datetime] = None,
         data_fim: Optional[datetime] = None,
     ) -> ReceitaDashboard:
@@ -208,7 +208,7 @@ class ReceitaService:
 
         Args:
             db: Sessão do banco de dados
-            usuario_id: Filtro por ID do usuário
+            usuario: Filtro por remotejid do usuário
             data_inicio: Data de início do período
             data_fim: Data de fim do período
 
@@ -218,8 +218,8 @@ class ReceitaService:
         # Condições base
         conditions = []
 
-        if usuario_id:
-            conditions.append(Receita.usuario == usuario_id)
+        if usuario:
+            conditions.append(Receita.usuario == usuario)
 
         if data_inicio:
             conditions.append(Receita.data >= data_inicio)

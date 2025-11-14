@@ -13,7 +13,7 @@ class GastoBase(BaseModel):
     descricao: str = Field(..., min_length=1, max_length=500, description="Descrição do gasto")
     valor: Decimal = Field(..., gt=0, description="Valor do gasto (deve ser maior que zero)")
     categoria: str = Field(..., min_length=1, max_length=100, description="Categoria do gasto")
-    data: datetime = Field(..., description="Data do gasto")
+    data: Optional[datetime] = Field(None, description="Data do gasto")
 
     @field_validator("valor")
     @classmethod
@@ -33,7 +33,7 @@ class GastoBase(BaseModel):
 
 class GastoCreate(GastoBase):
     """Schema para criação de Gasto"""
-    usuario: UUID = Field(..., description="ID do usuário")
+    usuario: str = Field(..., min_length=1, description="RemoteJID do usuário")
 
 
 class GastoUpdate(BaseModel):
@@ -61,7 +61,7 @@ class GastoUpdate(BaseModel):
 class GastoResponse(GastoBase):
     """Schema de resposta para Gasto"""
     id: UUID
-    usuario: UUID
+    usuario: str
     created_at: datetime
     updated_at: datetime
 
@@ -80,7 +80,7 @@ class GastoListResponse(BaseModel):
 
 class GastoFilter(BaseModel):
     """Schema para filtros de busca de gastos"""
-    usuario: Optional[UUID] = Field(None, description="Filtrar por ID do usuário")
+    usuario: Optional[str] = Field(None, description="Filtrar por remotejid do usuário")
     categoria: Optional[str] = Field(None, description="Filtrar por categoria")
     data_inicio: Optional[datetime] = Field(None, description="Data de início do período")
     data_fim: Optional[datetime] = Field(None, description="Data de fim do período")

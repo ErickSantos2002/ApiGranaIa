@@ -13,7 +13,8 @@ class ReceitaBase(BaseModel):
     descricao: str = Field(..., min_length=1, max_length=500, description="Descrição da receita")
     valor: Decimal = Field(..., gt=0, description="Valor da receita (deve ser maior que zero)")
     categoria: str = Field(..., min_length=1, max_length=100, description="Categoria da receita")
-    data: datetime = Field(..., description="Data da receita")
+    origem: Optional[str] = Field(None, description="Origem da receita")
+    data: Optional[datetime] = Field(None, description="Data da receita")
 
     @field_validator("valor")
     @classmethod
@@ -33,7 +34,7 @@ class ReceitaBase(BaseModel):
 
 class ReceitaCreate(ReceitaBase):
     """Schema para criação de Receita"""
-    usuario: UUID = Field(..., description="ID do usuário")
+    usuario: str = Field(..., min_length=1, description="RemoteJID do usuário")
 
 
 class ReceitaUpdate(BaseModel):
@@ -41,6 +42,7 @@ class ReceitaUpdate(BaseModel):
     descricao: Optional[str] = Field(None, min_length=1, max_length=500)
     valor: Optional[Decimal] = Field(None, gt=0)
     categoria: Optional[str] = Field(None, min_length=1, max_length=100)
+    origem: Optional[str] = Field(None, description="Origem da receita")
     data: Optional[datetime] = None
 
     @field_validator("valor")
@@ -61,7 +63,7 @@ class ReceitaUpdate(BaseModel):
 class ReceitaResponse(ReceitaBase):
     """Schema de resposta para Receita"""
     id: UUID
-    usuario: UUID
+    usuario: str
     created_at: datetime
     updated_at: datetime
 
@@ -80,7 +82,7 @@ class ReceitaListResponse(BaseModel):
 
 class ReceitaFilter(BaseModel):
     """Schema para filtros de busca de receitas"""
-    usuario: Optional[UUID] = Field(None, description="Filtrar por ID do usuário")
+    usuario: Optional[str] = Field(None, description="Filtrar por remotejid do usuário")
     categoria: Optional[str] = Field(None, description="Filtrar por categoria")
     data_inicio: Optional[datetime] = Field(None, description="Data de início do período")
     data_fim: Optional[datetime] = Field(None, description="Data de fim do período")

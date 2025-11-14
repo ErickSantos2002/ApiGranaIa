@@ -41,10 +41,6 @@ RUN apt-get update && apt-get install -y \
 # Copiar código da aplicação
 COPY . .
 
-# Criar usuário não-root para executar a aplicação
-RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
-USER appuser
-
 # Expor porta
 EXPOSE 8000
 

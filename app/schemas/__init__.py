@@ -5,6 +5,7 @@ from app.schemas.common import (
     ResponseModel,
     PaginatedResponse,
     PaginationParams,
+    create_pagination_meta,
 )
 from app.schemas.usuario import (
     UsuarioBase,
@@ -35,6 +36,7 @@ __all__ = [
     "ResponseModel",
     "PaginatedResponse",
     "PaginationParams",
+    "create_pagination_meta",
     # Usuario
     "UsuarioBase",
     "UsuarioCreate",

@@ -13,6 +13,7 @@ from app.database import engine, Base
 from app.middleware import LoggingMiddleware
 from app.utils.exceptions import BaseAPIException
 from app.routes import usuarios_router, gastos_router, receitas_router
+from app.routes.auth import router as auth_router
 
 
 @asynccontextmanager
@@ -190,6 +191,7 @@ async def api_info():
             "version": settings.APP_VERSION,
             "description": "API de gerenciamento financeiro",
             "endpoints": {
+                "auth": f"{settings.API_PREFIX}/auth",
                 "usuarios": f"{settings.API_PREFIX}/usuarios",
                 "gastos": f"{settings.API_PREFIX}/gastos",
                 "receitas": f"{settings.API_PREFIX}/receitas",
@@ -201,6 +203,7 @@ async def api_info():
 
 
 # Incluir rotas com prefixo
+app.include_router(auth_router, prefix=settings.API_PREFIX)
 app.include_router(usuarios_router, prefix=settings.API_PREFIX)
 app.include_router(gastos_router, prefix=settings.API_PREFIX)
 app.include_router(receitas_router, prefix=settings.API_PREFIX)

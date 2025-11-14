@@ -27,6 +27,7 @@ class UsuarioUpdate(BaseModel):
     phone: Optional[str] = None
     last_message: Optional[str] = None
     premium_until: Optional[datetime] = None
+    tipo_premium: Optional[str] = None
 
     @field_validator("name")
     @classmethod
@@ -39,6 +40,7 @@ class UsuarioUpdate(BaseModel):
 class UsuarioUpdatePremium(BaseModel):
     """Schema para atualização do premium"""
     premium_until: datetime = Field(..., description="Nova data de expiração do premium")
+    tipo_premium: Optional[str] = Field(None, description="Tipo do premium")
 
 
 class UsuarioUpdateLastMessage(BaseModel):

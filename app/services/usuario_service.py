@@ -209,18 +209,20 @@ class UsuarioService:
         premium_data: UsuarioUpdatePremium
     ) -> Usuario:
         """
-        Atualiza a data de expiração do premium
+        Atualiza a data de expiração do premium e tipo
 
         Args:
             db: Sessão do banco de dados
             usuario_id: ID do usuário
-            premium_data: Nova data de expiração
+            premium_data: Nova data de expiração e tipo de premium
 
         Returns:
             Usuario: Usuário atualizado
         """
         usuario = await UsuarioService.get_by_id(db, usuario_id)
         usuario.premium_until = premium_data.premium_until
+        if premium_data.tipo_premium:
+            usuario.tipo_premium = premium_data.tipo_premium
 
         await db.flush()
         await db.refresh(usuario)

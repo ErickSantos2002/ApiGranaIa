@@ -29,16 +29,19 @@ class Usuario(Base):
     remotejid = Column(Text, unique=True, nullable=False)
     last_message = Column(Text, nullable=True)
     premium_until = Column(DateTime(timezone=True), nullable=True)
+    email = Column(Text, unique=True, nullable=True, index=True)
+    senha = Column(Text, nullable=True)
+    tipo_premium = Column(Text, nullable=True)
     created_at = Column(
         DateTime(timezone=True),
         server_default=func.now(),
-        nullable=False
+        nullable=True
     )
     updated_at = Column(
         DateTime(timezone=True),
         server_default=func.now(),
         onupdate=func.now(),
-        nullable=False
+        nullable=True
     )
 
     # Relacionamentos

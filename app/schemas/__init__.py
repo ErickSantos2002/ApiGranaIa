@@ -30,6 +30,12 @@ from app.schemas.receita import (
     ReceitaListResponse,
     ReceitaDashboard,
 )
+from app.schemas.auth import (
+    UsuarioRegister,
+    UsuarioLogin,
+    TokenResponse,
+    UsuarioProfile,
+)
 
 __all__ = [
     # Common
@@ -57,4 +63,9 @@ __all__ = [
     "ReceitaResponse",
     "ReceitaListResponse",
     "ReceitaDashboard",
+    # Auth
+    "UsuarioRegister",
+    "UsuarioLogin",
+    "TokenResponse",
+    "UsuarioProfile",
 ]

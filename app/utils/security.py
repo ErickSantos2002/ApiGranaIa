@@ -4,11 +4,8 @@ Utilitários de segurança e autenticação JWT
 from datetime import datetime, timedelta
 from typing import Optional, Dict, Any
 from jose import JWTError, jwt
-from passlib.context import CryptContext
+import bcrypt
 from app.config import settings
-
-# Contexto de criptografia para senhas
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 def create_access_token(data: Dict[str, Any], expires_delta: Optional[timedelta] = None) -> str:
@@ -54,7 +51,7 @@ def verify_token(token: str) -> Optional[Dict[str, Any]]:
 
 def get_password_hash(password: str) -> str:
     """
-    Gera hash de uma senha.
+    Gera hash de uma senha usando bcrypt.
 
     Bcrypt tem limite de 72 bytes, então truncamos a senha se necessário.
     Isso é uma prática segura e comum.
@@ -67,13 +64,18 @@ def get_password_hash(password: str) -> str:
     """
     # Truncar senha para 72 bytes (limite do bcrypt)
     password_bytes = password.encode('utf-8')[:72]
-    password_truncated = password_bytes.decode('utf-8', errors='ignore')
-    return pwd_context.hash(password_truncated)
+
+    # Gerar salt e hash usando bcrypt diretamente
+    salt = bcrypt.gensalt()
+    hashed = bcrypt.hashpw(password_bytes, salt)
+
+    # Retornar como string UTF-8
+    return hashed.decode('utf-8')
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """
-    Verifica se uma senha corresponde ao hash.
+    Verifica se uma senha corresponde ao hash usando bcrypt.
 
     Args:
         plain_password: Senha em texto plano
@@ -84,5 +86,7 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     """
     # Truncar senha para 72 bytes (limite do bcrypt)
     password_bytes = plain_password.encode('utf-8')[:72]
-    password_truncated = password_bytes.decode('utf-8', errors='ignore')
-    return pwd_context.verify(password_truncated, hashed_password)
+    hashed_bytes = hashed_password.encode('utf-8')
+
+    # Verificar usando bcrypt diretamente
+    return bcrypt.checkpw(password_bytes, hashed_bytes)

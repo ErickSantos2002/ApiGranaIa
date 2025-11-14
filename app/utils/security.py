@@ -56,13 +56,19 @@ def get_password_hash(password: str) -> str:
     """
     Gera hash de uma senha.
 
+    Bcrypt tem limite de 72 bytes, então truncamos a senha se necessário.
+    Isso é uma prática segura e comum.
+
     Args:
         password: Senha em texto plano
 
     Returns:
         str: Hash da senha
     """
-    return pwd_context.hash(password)
+    # Truncar senha para 72 bytes (limite do bcrypt)
+    password_bytes = password.encode('utf-8')[:72]
+    password_truncated = password_bytes.decode('utf-8', errors='ignore')
+    return pwd_context.hash(password_truncated)
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
@@ -76,4 +82,7 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     Returns:
         bool: True se a senha é válida, False caso contrário
     """
-    return pwd_context.verify(plain_password, hashed_password)
+    # Truncar senha para 72 bytes (limite do bcrypt)
+    password_bytes = plain_password.encode('utf-8')[:72]
+    password_truncated = password_bytes.decode('utf-8', errors='ignore')
+    return pwd_context.verify(password_truncated, hashed_password)

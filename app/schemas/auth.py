@@ -10,7 +10,7 @@ class UsuarioRegister(BaseModel):
     name: str = Field(..., min_length=1, max_length=255, description="Nome completo")
     email: EmailStr = Field(..., description="Email do usuário")
     phone: str = Field(..., min_length=1, description="Telefone do usuário")
-    senha: str = Field(..., min_length=6, description="Senha (mínimo 6 caracteres)")
+    senha: str = Field(..., min_length=6, max_length=128, description="Senha (entre 6 e 128 caracteres)")
 
     @field_validator("name", "phone")
     @classmethod
@@ -23,7 +23,7 @@ class UsuarioRegister(BaseModel):
 class UsuarioLogin(BaseModel):
     """Schema para login de usuário"""
     email: EmailStr = Field(..., description="Email do usuário")
-    senha: str = Field(..., description="Senha do usuário")
+    senha: str = Field(..., max_length=128, description="Senha do usuário (máximo 128 caracteres)")
 
 
 class TokenResponse(BaseModel):

@@ -2,10 +2,11 @@
 Schemas Pydantic para Receita
 """
 from datetime import datetime
-from typing import Optional, List
+from typing import Optional, List, Union
 from uuid import UUID
 from decimal import Decimal
 from pydantic import BaseModel, Field, field_validator
+from dateutil import parser as date_parser
 
 
 class ReceitaBase(BaseModel):
@@ -14,7 +15,33 @@ class ReceitaBase(BaseModel):
     valor: Decimal = Field(..., gt=0, description="Valor da receita (deve ser maior que zero)")
     categoria: str = Field(..., min_length=1, max_length=100, description="Categoria da receita")
     origem: Optional[str] = Field(None, description="Origem da receita")
-    data: Optional[datetime] = Field(None, description="Data da receita")
+    data: Optional[Union[datetime, str]] = Field(None, description="Data da receita (aceita ISO8601, datetime ou string)")
+
+    @field_validator("data", mode="before")
+    @classmethod
+    def validate_data(cls, v):
+        """
+        Valida e converte o campo data para datetime.
+        Aceita datetime, string ISO8601, ou outros formatos comuns.
+        """
+        if v is None:
+            return None
+
+        if isinstance(v, datetime):
+            return v
+
+        if isinstance(v, str):
+            try:
+                # Usar dateutil.parser que aceita vários formatos
+                return date_parser.parse(v)
+            except (ValueError, TypeError) as e:
+                raise ValueError(f"Formato de data inválido: {v}. Use ISO8601 (ex: 2025-11-17T12:00:00) ou outro formato padrão.")
+
+        # Se não for datetime nem string, tentar converter
+        try:
+            return datetime.fromisoformat(str(v))
+        except (ValueError, TypeError):
+            raise ValueError(f"Formato de data inválido: {v}")
 
     @field_validator("valor")
     @classmethod

@@ -17,6 +17,14 @@ from app.config import settings
 security = HTTPBearer()
 
 
+def _get_db_dependency():
+    """
+    Função auxiliar para obter a dependência get_db sem import circular.
+    """
+    from app.database import get_db
+    return get_db
+
+
 def create_access_token(data: Dict[str, Any], expires_delta: Optional[timedelta] = None) -> str:
     """
     Cria um token JWT de acesso.
@@ -103,17 +111,14 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 
 async def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security),
-    db: AsyncSession = None
+    db: AsyncSession = Depends(_get_db_dependency())
 ):
     """
     Dependência para obter o usuário autenticado a partir do token JWT.
 
-    IMPORTANTE: Esta função deve ser usada com Depends() nos endpoints,
-    e o parâmetro db deve ser passado explicitamente com Depends(get_db).
-
     Args:
         credentials: Credenciais HTTP Bearer (token)
-        db: Sessão do banco de dados
+        db: Sessão do banco de dados (injetada automaticamente)
 
     Returns:
         Usuario: Usuário autenticado

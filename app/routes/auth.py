@@ -108,7 +108,6 @@ async def login(
     description="Retorna informações do usuário logado"
 )
 async def get_current_user_profile(
-    db: AsyncSession = Depends(get_db),
     current_user: Usuario = Depends(get_current_user)
 ):
     """

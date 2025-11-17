@@ -5,7 +5,7 @@ from typing import Optional
 from datetime import datetime
 from uuid import UUID
 from decimal import Decimal
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, Depends, Query, status, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
@@ -25,6 +25,35 @@ from app.models.usuario import Usuario
 from app.utils.security import get_current_user
 
 router = APIRouter(prefix="/gastos", tags=["Gastos"])
+
+
+@router.post(
+    "/debug",
+    summary="Debug - Ver dados enviados",
+    description="Endpoint temporário para debug de dados enviados"
+)
+async def debug_gasto(
+    request: dict,
+    current_user: Usuario = Depends(get_current_user)
+):
+    """
+    Endpoint temporário para debug.
+    Mostra exatamente o que está sendo enviado pelo frontend.
+    """
+    import logging
+    logger = logging.getLogger(__name__)
+
+    logger.info(f"=== DEBUG GASTO ===")
+    logger.info(f"Usuário autenticado: {current_user.id} - {current_user.remotejid}")
+    logger.info(f"Dados recebidos: {request}")
+    logger.info(f"==================")
+
+    return {
+        "success": True,
+        "user_id": str(current_user.id),
+        "user_remotejid": current_user.remotejid,
+        "data_received": request
+    }
 
 
 @router.post(
@@ -51,22 +80,45 @@ async def create_gasto(
 
     O usuário é automaticamente identificado pelo token JWT.
     """
-    # Criar GastoCreate com o remotejid do usuário autenticado
-    gasto_create = GastoCreate(
-        usuario=current_user.remotejid,
-        descricao=gasto_data.descricao,
-        valor=gasto_data.valor,
-        categoria=gasto_data.categoria,
-        data=gasto_data.data
-    )
+    import logging
+    logger = logging.getLogger(__name__)
 
-    gasto = await GastoService.create(db, gasto_create)
+    # Log para debug
+    logger.info(f"Criando gasto para usuário: {current_user.remotejid}")
+    logger.info(f"Dados recebidos: descricao={gasto_data.descricao}, valor={gasto_data.valor}, categoria={gasto_data.categoria}, data={gasto_data.data}")
 
-    return ResponseModel(
-        success=True,
-        message="Gasto criado com sucesso",
-        data=GastoResponse.model_validate(gasto)
-    )
+    # Verificar se o usuário tem remotejid
+    if not current_user.remotejid:
+        logger.error(f"Usuário {current_user.id} não tem remotejid!")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Usuário não possui remotejid configurado"
+        )
+
+    try:
+        # Criar GastoCreate com o remotejid do usuário autenticado
+        gasto_create = GastoCreate(
+            usuario=current_user.remotejid,
+            descricao=gasto_data.descricao,
+            valor=gasto_data.valor,
+            categoria=gasto_data.categoria,
+            data=gasto_data.data
+        )
+
+        logger.info(f"GastoCreate criado: {gasto_create}")
+
+        gasto = await GastoService.create(db, gasto_create)
+
+        logger.info(f"Gasto criado com sucesso: {gasto.id}")
+
+        return ResponseModel(
+            success=True,
+            message="Gasto criado com sucesso",
+            data=GastoResponse.model_validate(gasto)
+        )
+    except Exception as e:
+        logger.error(f"Erro ao criar gasto: {type(e).__name__}: {str(e)}")
+        raise
 
 
 @router.get(

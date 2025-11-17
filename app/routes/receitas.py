@@ -12,6 +12,7 @@ from app.database import get_db
 from app.services import ReceitaService
 from app.schemas import (
     ReceitaCreate,
+    ReceitaCreateRequest,
     ReceitaUpdate,
     ReceitaResponse,
     ReceitaDashboard,
@@ -20,6 +21,8 @@ from app.schemas import (
     PaginationParams,
     create_pagination_meta,
 )
+from app.models.usuario import Usuario
+from app.utils.security import get_current_user
 
 router = APIRouter(prefix="/receitas", tags=["Receitas"])
 
@@ -29,22 +32,37 @@ router = APIRouter(prefix="/receitas", tags=["Receitas"])
     response_model=ResponseModel[ReceitaResponse],
     status_code=status.HTTP_201_CREATED,
     summary="Criar nova receita",
-    description="Cria uma nova receita para um usuário"
+    description="Cria uma nova receita para o usuário autenticado"
 )
 async def create_receita(
-    receita_data: ReceitaCreate,
+    receita_data: ReceitaCreateRequest,
+    current_user: Usuario = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     """
-    Cria uma nova receita com os dados fornecidos.
+    Cria uma nova receita para o usuário autenticado.
 
-    - **usuario**: ID do usuário (obrigatório)
+    **Requer autenticação via token JWT.**
+
     - **descricao**: Descrição da receita (obrigatório)
     - **valor**: Valor da receita - deve ser maior que zero (obrigatório)
     - **categoria**: Categoria da receita (obrigatório)
-    - **data**: Data da receita (obrigatório)
+    - **origem**: Origem da receita (opcional)
+    - **data**: Data da receita (opcional, padrão: agora)
+
+    O usuário é automaticamente identificado pelo token JWT.
     """
-    receita = await ReceitaService.create(db, receita_data)
+    # Criar ReceitaCreate com o remotejid do usuário autenticado
+    receita_create = ReceitaCreate(
+        usuario=current_user.remotejid,
+        descricao=receita_data.descricao,
+        valor=receita_data.valor,
+        categoria=receita_data.categoria,
+        origem=receita_data.origem,
+        data=receita_data.data
+    )
+
+    receita = await ReceitaService.create(db, receita_create)
 
     return ResponseModel(
         success=True,

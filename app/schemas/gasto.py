@@ -32,8 +32,13 @@ class GastoBase(BaseModel):
 
 
 class GastoCreate(GastoBase):
-    """Schema para criação de Gasto"""
+    """Schema para criação de Gasto (interno, com usuario)"""
     usuario: str = Field(..., min_length=1, description="RemoteJID do usuário")
+
+
+class GastoCreateRequest(GastoBase):
+    """Schema para requisição de criação de Gasto (sem usuario, vem do token JWT)"""
+    pass
 
 
 class GastoUpdate(BaseModel):

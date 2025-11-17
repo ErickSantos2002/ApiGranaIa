@@ -33,8 +33,13 @@ class ReceitaBase(BaseModel):
 
 
 class ReceitaCreate(ReceitaBase):
-    """Schema para criação de Receita"""
+    """Schema para criação de Receita (interno, com usuario)"""
     usuario: str = Field(..., min_length=1, description="RemoteJID do usuário")
+
+
+class ReceitaCreateRequest(ReceitaBase):
+    """Schema para requisição de criação de Receita (sem usuario, vem do token JWT)"""
+    pass
 
 
 class ReceitaUpdate(BaseModel):

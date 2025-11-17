@@ -12,6 +12,7 @@ from app.database import get_db
 from app.services import GastoService
 from app.schemas import (
     GastoCreate,
+    GastoCreateRequest,
     GastoUpdate,
     GastoResponse,
     GastoDashboard,
@@ -20,6 +21,8 @@ from app.schemas import (
     PaginationParams,
     create_pagination_meta,
 )
+from app.models.usuario import Usuario
+from app.utils.security import get_current_user
 
 router = APIRouter(prefix="/gastos", tags=["Gastos"])
 
@@ -29,22 +32,35 @@ router = APIRouter(prefix="/gastos", tags=["Gastos"])
     response_model=ResponseModel[GastoResponse],
     status_code=status.HTTP_201_CREATED,
     summary="Criar novo gasto",
-    description="Cria um novo gasto para um usuário"
+    description="Cria um novo gasto para o usuário autenticado"
 )
 async def create_gasto(
-    gasto_data: GastoCreate,
+    gasto_data: GastoCreateRequest,
+    current_user: Usuario = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     """
-    Cria um novo gasto com os dados fornecidos.
+    Cria um novo gasto para o usuário autenticado.
 
-    - **usuario**: ID do usuário (obrigatório)
+    **Requer autenticação via token JWT.**
+
     - **descricao**: Descrição do gasto (obrigatório)
     - **valor**: Valor do gasto - deve ser maior que zero (obrigatório)
     - **categoria**: Categoria do gasto (obrigatório)
-    - **data**: Data do gasto (obrigatório)
+    - **data**: Data do gasto (opcional, padrão: agora)
+
+    O usuário é automaticamente identificado pelo token JWT.
     """
-    gasto = await GastoService.create(db, gasto_data)
+    # Criar GastoCreate com o remotejid do usuário autenticado
+    gasto_create = GastoCreate(
+        usuario=current_user.remotejid,
+        descricao=gasto_data.descricao,
+        valor=gasto_data.valor,
+        categoria=gasto_data.categoria,
+        data=gasto_data.data
+    )
+
+    gasto = await GastoService.create(db, gasto_create)
 
     return ResponseModel(
         success=True,

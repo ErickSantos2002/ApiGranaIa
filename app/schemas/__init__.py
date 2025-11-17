@@ -17,6 +17,7 @@ from app.schemas.usuario import (
 from app.schemas.gasto import (
     GastoBase,
     GastoCreate,
+    GastoCreateRequest,
     GastoUpdate,
     GastoResponse,
     GastoListResponse,
@@ -25,6 +26,7 @@ from app.schemas.gasto import (
 from app.schemas.receita import (
     ReceitaBase,
     ReceitaCreate,
+    ReceitaCreateRequest,
     ReceitaUpdate,
     ReceitaResponse,
     ReceitaListResponse,
@@ -52,6 +54,7 @@ __all__ = [
     # Gasto
     "GastoBase",
     "GastoCreate",
+    "GastoCreateRequest",
     "GastoUpdate",
     "GastoResponse",
     "GastoListResponse",
@@ -59,6 +62,7 @@ __all__ = [
     # Receita
     "ReceitaBase",
     "ReceitaCreate",
+    "ReceitaCreateRequest",
     "ReceitaUpdate",
     "ReceitaResponse",
     "ReceitaListResponse",

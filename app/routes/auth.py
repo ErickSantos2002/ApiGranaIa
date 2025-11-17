@@ -14,6 +14,8 @@ from app.schemas import (
     ResponseModel,
 )
 from app.schemas.usuario import UsuarioResponse
+from app.models.usuario import Usuario
+from app.utils.security import get_current_user
 
 router = APIRouter(prefix="/auth", tags=["Autenticação"])
 
@@ -106,7 +108,8 @@ async def login(
     description="Retorna informações do usuário logado"
 )
 async def get_current_user_profile(
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: Usuario = Depends(get_current_user)
 ):
     """
     Retorna o perfil do usuário autenticado.
@@ -117,13 +120,24 @@ async def get_current_user_profile(
     - Dados pessoais
     - Status do premium
     - RemoteJID
+    - Email
 
-    TODO: Implementar validação do token JWT
+    O token JWT deve ser enviado no header Authorization:
+    ```
+    Authorization: Bearer {access_token}
+    ```
     """
-    # TODO: Extrair user_id do token JWT
-    # Por enquanto retorna erro informativo
     return ResponseModel(
-        success=False,
-        message="Endpoint requer implementação de autenticação JWT",
-        data=None
+        success=True,
+        message="Perfil do usuário obtido com sucesso",
+        data=UsuarioProfile(
+            id=str(current_user.id),
+            name=current_user.name,
+            email=current_user.email,
+            phone=current_user.phone,
+            remotejid=current_user.remotejid,
+            premium_until=current_user.premium_until.isoformat() if current_user.premium_until else None,
+            tipo_premium=current_user.tipo_premium,
+            is_premium_active=current_user.is_premium_active
+        )
     )

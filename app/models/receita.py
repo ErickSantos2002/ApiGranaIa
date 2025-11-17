@@ -1,7 +1,7 @@
 """
 Model SQLAlchemy para Receita
 """
-from sqlalchemy import Column, Text, DateTime, Numeric, ForeignKey, Index
+from sqlalchemy import Column, Text, DateTime, Numeric, ForeignKey, Index, Enum
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
@@ -31,7 +31,22 @@ class Receita(Base):
     )
     descricao = Column(Text, nullable=False)
     valor = Column(Numeric(precision=12, scale=2), nullable=False)
-    categoria = Column(Text, nullable=False, index=True)
+    categoria = Column(
+        Enum(
+            'Alimentação',
+            'Transporte',
+            'Moradia',
+            'Saúde',
+            'Educação',
+            'Lazer',
+            'Compras',
+            'Outros',
+            name='categorias_financeiras',
+            create_type=False  # Não criar o tipo, ele já existe no banco
+        ),
+        nullable=False,
+        index=True
+    )
     origem = Column(Text, nullable=True)
     data = Column(DateTime(timezone=True), server_default=func.now(), nullable=True)
     created_at = Column(

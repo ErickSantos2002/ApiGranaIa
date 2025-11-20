@@ -2,7 +2,7 @@
 Service para lógica de negócios de Autenticação
 """
 from typing import Optional
-from datetime import timedelta
+from datetime import timedelta, datetime
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -10,6 +10,7 @@ from app.models import Usuario
 from app.schemas.auth import UsuarioRegister, UsuarioLogin, TokenResponse
 from app.utils.security import get_password_hash, verify_password, create_access_token
 from app.utils.exceptions import NotFoundException, BadRequestException, UnauthorizedException, ConflictException
+from app.utils.timezone import now_brasilia
 from app.config import settings
 
 
@@ -55,6 +56,15 @@ class AuthService:
         # Hash da senha
         senha_hash = get_password_hash(user_data.senha)
 
+        # Define valores padrão para premium
+        # Novo usuário começa com plano 'free' válido por 7 dias
+        # Usa horário de Brasília
+        now = now_brasilia()
+        premium_expires = now + timedelta(days=7)
+
+        # Remove timezone para compatibilidade com TIMESTAMP (sem timezone) do banco
+        premium_expires_naive = premium_expires.replace(tzinfo=None)
+
         # Cria o usuário
         usuario = Usuario(
             name=user_data.name,
@@ -62,6 +72,8 @@ class AuthService:
             phone=user_data.phone,
             remotejid=remotejid,
             senha=senha_hash,
+            tipo_premium='free',
+            premium_until=premium_expires_naive,
         )
 
         db.add(usuario)

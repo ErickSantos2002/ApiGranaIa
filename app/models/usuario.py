@@ -2,13 +2,14 @@
 Model SQLAlchemy para Usuário
 """
 from datetime import datetime
-from sqlalchemy import Column, String, Text, DateTime, Index
+from sqlalchemy import Column, String, Text, DateTime, Index, Enum
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 import uuid
 
 from app.database import Base
+from app.utils.timezone import now_brasilia
 
 
 class Usuario(Base):
@@ -28,17 +29,28 @@ class Usuario(Base):
     phone = Column(Text, nullable=True)
     remotejid = Column(Text, unique=True, nullable=False)
     last_message = Column(Text, nullable=True)
-    premium_until = Column(DateTime(timezone=True), nullable=True)
+    premium_until = Column(DateTime(timezone=False), nullable=True)
     email = Column(Text, unique=True, nullable=True, index=True)
     senha = Column(Text, nullable=True)
-    tipo_premium = Column(Text, nullable=True)
+    tipo_premium = Column(
+        Enum(
+            'free',
+            'ia',
+            'ia_dashboard',
+            'vitalicio',
+            name='tipo_plano',
+            create_type=False  # Não criar o tipo, ele já existe no banco
+        ),
+        server_default='free',
+        nullable=True
+    )
     created_at = Column(
-        DateTime(timezone=True),
+        DateTime(timezone=False),
         server_default=func.now(),
         nullable=True
     )
     updated_at = Column(
-        DateTime(timezone=True),
+        DateTime(timezone=False),
         server_default=func.now(),
         onupdate=func.now(),
         nullable=True
@@ -70,7 +82,15 @@ class Usuario(Base):
 
     @property
     def is_premium_active(self) -> bool:
-        """Verifica se o usuário tem premium ativo"""
+        """
+        Verifica se o usuário tem premium ativo
+
+        Compara premium_until com o horário atual de Brasília.
+        Como premium_until está armazenado em horário de Brasília (naive),
+        comparamos com now_brasilia() sem timezone.
+        """
         if not self.premium_until:
             return False
-        return self.premium_until > datetime.now(self.premium_until.tzinfo)
+        # Pega horário de Brasília atual e remove timezone para comparar
+        now = now_brasilia().replace(tzinfo=None)
+        return self.premium_until > now

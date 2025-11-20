@@ -33,15 +33,15 @@ class Receita(Base):
     valor = Column(Numeric(precision=12, scale=2), nullable=False)
     categoria = Column(
         Enum(
-            'Alimentação',
-            'Transporte',
-            'Moradia',
-            'Saúde',
-            'Educação',
-            'Lazer',
-            'Compras',
+            'Salário',
+            'Freelance',
+            'Investimentos',
+            'Bonificação',
+            'Presente',
+            'Aluguel',
+            'Venda',
             'Outros',
-            name='categorias_financeiras',
+            name='categorias_receitas',
             create_type=False  # Não criar o tipo, ele já existe no banco
         ),
         nullable=False,

@@ -73,7 +73,33 @@ class GastoUpdate(BaseModel):
     descricao: Optional[str] = Field(None, min_length=1, max_length=500)
     valor: Optional[Decimal] = Field(None, gt=0)
     categoria: Optional[str] = Field(None, min_length=1, max_length=100)
-    data: Optional[datetime] = None
+    data: Optional[Union[datetime, str]] = None
+
+    @field_validator("data", mode="before")
+    @classmethod
+    def validate_data(cls, v):
+        """
+        Valida e converte o campo data para datetime.
+        Aceita datetime, string ISO8601, ou outros formatos comuns.
+        """
+        if v is None:
+            return None
+
+        if isinstance(v, datetime):
+            return v
+
+        if isinstance(v, str):
+            try:
+                # Usar dateutil.parser que aceita vários formatos
+                return date_parser.parse(v)
+            except (ValueError, TypeError) as e:
+                raise ValueError(f"Formato de data inválido: {v}. Use ISO8601 (ex: 2025-11-17T12:00:00) ou outro formato padrão.")
+
+        # Se não for datetime nem string, tentar converter
+        try:
+            return datetime.fromisoformat(str(v))
+        except (ValueError, TypeError):
+            raise ValueError(f"Formato de data inválido: {v}")
 
     @field_validator("valor")
     @classmethod

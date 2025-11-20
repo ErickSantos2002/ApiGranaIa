@@ -23,6 +23,7 @@ from app.schemas import (
 )
 from app.models.usuario import Usuario
 from app.utils.security import get_current_user
+from app.utils.premium import require_premium
 
 router = APIRouter(prefix="/gastos", tags=["Gastos"])
 
@@ -34,7 +35,7 @@ router = APIRouter(prefix="/gastos", tags=["Gastos"])
 )
 async def debug_gasto(
     request: dict,
-    current_user: Usuario = Depends(get_current_user)
+    current_user: Usuario = Depends(require_premium)
 ):
     """
     Endpoint temporário para debug.
@@ -65,7 +66,7 @@ async def debug_gasto(
 )
 async def create_gasto(
     gasto_data: GastoCreateRequest,
-    current_user: Usuario = Depends(get_current_user),
+    current_user: Usuario = Depends(require_premium),
     db: AsyncSession = Depends(get_db)
 ):
     """
@@ -136,6 +137,7 @@ async def list_gastos(
     data_fim: Optional[datetime] = Query(None, description="Data de fim do período"),
     valor_min: Optional[Decimal] = Query(None, ge=0, description="Valor mínimo"),
     valor_max: Optional[Decimal] = Query(None, ge=0, description="Valor máximo"),
+    current_user: Usuario = Depends(require_premium),
     db: AsyncSession = Depends(get_db)
 ):
     """
@@ -184,6 +186,7 @@ async def get_gastos_dashboard(
     usuario: Optional[str] = Query(None, description="Filtrar por remotejid do usuário"),
     data_inicio: Optional[datetime] = Query(None, description="Data de início do período"),
     data_fim: Optional[datetime] = Query(None, description="Data de fim do período"),
+    current_user: Usuario = Depends(require_premium),
     db: AsyncSession = Depends(get_db)
 ):
     """
@@ -245,6 +248,7 @@ async def get_gasto(
 async def update_gasto(
     gasto_id: UUID,
     gasto_data: GastoUpdate,
+    current_user: Usuario = Depends(require_premium),
     db: AsyncSession = Depends(get_db)
 ):
     """
@@ -269,6 +273,7 @@ async def update_gasto(
 )
 async def delete_gasto(
     gasto_id: UUID,
+    current_user: Usuario = Depends(require_premium),
     db: AsyncSession = Depends(get_db)
 ):
     """

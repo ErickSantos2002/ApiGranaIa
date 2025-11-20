@@ -23,6 +23,7 @@ from app.schemas import (
 )
 from app.models.usuario import Usuario
 from app.utils.security import get_current_user
+from app.utils.premium import require_premium
 
 router = APIRouter(prefix="/receitas", tags=["Receitas"])
 
@@ -36,7 +37,7 @@ router = APIRouter(prefix="/receitas", tags=["Receitas"])
 )
 async def create_receita(
     receita_data: ReceitaCreateRequest,
-    current_user: Usuario = Depends(get_current_user),
+    current_user: Usuario = Depends(require_premium),
     db: AsyncSession = Depends(get_db)
 ):
     """
@@ -86,6 +87,7 @@ async def list_receitas(
     data_fim: Optional[datetime] = Query(None, description="Data de fim do período"),
     valor_min: Optional[Decimal] = Query(None, ge=0, description="Valor mínimo"),
     valor_max: Optional[Decimal] = Query(None, ge=0, description="Valor máximo"),
+    current_user: Usuario = Depends(require_premium),
     db: AsyncSession = Depends(get_db)
 ):
     """
@@ -134,6 +136,7 @@ async def get_receitas_dashboard(
     usuario: Optional[str] = Query(None, description="Filtrar por remotejid do usuário"),
     data_inicio: Optional[datetime] = Query(None, description="Data de início do período"),
     data_fim: Optional[datetime] = Query(None, description="Data de fim do período"),
+    current_user: Usuario = Depends(require_premium),
     db: AsyncSession = Depends(get_db)
 ):
     """
@@ -195,6 +198,7 @@ async def get_receita(
 async def update_receita(
     receita_id: UUID,
     receita_data: ReceitaUpdate,
+    current_user: Usuario = Depends(require_premium),
     db: AsyncSession = Depends(get_db)
 ):
     """
@@ -219,6 +223,7 @@ async def update_receita(
 )
 async def delete_receita(
     receita_id: UUID,
+    current_user: Usuario = Depends(require_premium),
     db: AsyncSession = Depends(get_db)
 ):
     """

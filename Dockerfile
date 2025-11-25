@@ -1,5 +1,5 @@
 # Stage 1: Base
-FROM python:3.11-slim as base
+FROM python:3.11-slim AS base
 
 # Definir variáveis de ambiente
 ENV PYTHONUNBUFFERED=1 \
@@ -11,7 +11,7 @@ ENV PYTHONUNBUFFERED=1 \
 WORKDIR /app
 
 # Stage 2: Builder
-FROM base as builder
+FROM base AS builder
 
 # Instalar dependências do sistema necessárias para compilar pacotes
 RUN apt-get update && apt-get install -y \
@@ -25,7 +25,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Stage 3: Runtime
-FROM base as runtime
+FROM base AS runtime
 
 # Copiar dependências instaladas do builder (do site-packages global)
 COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages

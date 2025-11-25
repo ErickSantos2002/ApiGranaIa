@@ -5,9 +5,11 @@ from typing import Optional
 from datetime import timedelta, datetime
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+import secrets
 
 from app.models import Usuario
-from app.schemas.auth import UsuarioRegister, UsuarioLogin, TokenResponse
+from app.models.password_reset import PasswordResetToken
+from app.schemas.auth import UsuarioRegister, UsuarioLogin, TokenResponse, RequestPasswordReset, PasswordResetResponse, ResetPassword
 from app.utils.security import get_password_hash, verify_password, create_access_token
 from app.utils.exceptions import NotFoundException, BadRequestException, UnauthorizedException, ConflictException
 from app.utils.timezone import now_brasilia
@@ -156,3 +158,110 @@ class AuthService:
             raise NotFoundException("Usuário não encontrado")
 
         return usuario
+
+    @staticmethod
+    async def request_password_reset(db: AsyncSession, data: RequestPasswordReset) -> PasswordResetResponse:
+        """
+        Cria um token para reset de senha
+
+        Args:
+            db: Sessão do banco de dados
+            data: Dados com telefone do usuário
+
+        Returns:
+            PasswordResetResponse: Token e tempo de expiração
+
+        Raises:
+            NotFoundException: Se usuário não encontrado
+        """
+        # Gera remotejid a partir do telefone
+        phone_clean = data.phone
+        remotejid = f"{phone_clean}@s.whatsapp.net"
+
+        # Busca usuário pelo remotejid
+        stmt = select(Usuario).where(Usuario.remotejid == remotejid)
+        result = await db.execute(stmt)
+        usuario = result.scalar_one_or_none()
+
+        if not usuario:
+            raise NotFoundException("Usuário não encontrado com este telefone")
+
+        # Gera token único e seguro (64 caracteres hexadecimais)
+        token = secrets.token_urlsafe(48)
+
+        # Define expiração (15 minutos)
+        now = now_brasilia()
+        expires_at = now + timedelta(minutes=15)
+        expires_at_naive = expires_at.replace(tzinfo=None)
+
+        # Invalida tokens anteriores deste usuário (marca como usados)
+        stmt_update = select(PasswordResetToken).where(
+            PasswordResetToken.usuario_id == usuario.id,
+            PasswordResetToken.used == False
+        )
+        result = await db.execute(stmt_update)
+        old_tokens = result.scalars().all()
+        for old_token in old_tokens:
+            old_token.used = True
+
+        # Cria novo token
+        reset_token = PasswordResetToken(
+            usuario_id=usuario.id,
+            token=token,
+            expires_at=expires_at_naive,
+            used=False
+        )
+
+        db.add(reset_token)
+        await db.flush()
+
+        return PasswordResetResponse(
+            token=token,
+            expires_in_minutes=15
+        )
+
+    @staticmethod
+    async def reset_password(db: AsyncSession, data: ResetPassword) -> None:
+        """
+        Redefine a senha do usuário usando o token
+
+        Args:
+            db: Sessão do banco de dados
+            data: Token e nova senha
+
+        Raises:
+            NotFoundException: Se token não encontrado
+            BadRequestException: Se token inválido ou expirado
+        """
+        # Busca token
+        stmt = select(PasswordResetToken).where(PasswordResetToken.token == data.token)
+        result = await db.execute(stmt)
+        reset_token = result.scalar_one_or_none()
+
+        if not reset_token:
+            raise NotFoundException("Token de recuperação não encontrado")
+
+        # Verifica se token foi usado
+        if reset_token.used:
+            raise BadRequestException("Este token já foi utilizado")
+
+        # Verifica se token expirou
+        if reset_token.is_expired:
+            raise BadRequestException("Este token expirou. Solicite um novo link de recuperação")
+
+        # Busca usuário
+        stmt = select(Usuario).where(Usuario.id == reset_token.usuario_id)
+        result = await db.execute(stmt)
+        usuario = result.scalar_one_or_none()
+
+        if not usuario:
+            raise NotFoundException("Usuário não encontrado")
+
+        # Atualiza senha
+        senha_hash = get_password_hash(data.new_password)
+        usuario.senha = senha_hash
+
+        # Marca token como usado
+        reset_token.used = True
+
+        await db.flush()

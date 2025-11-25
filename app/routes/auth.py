@@ -12,6 +12,9 @@ from app.schemas import (
     TokenResponse,
     UsuarioProfile,
     ResponseModel,
+    RequestPasswordReset,
+    PasswordResetResponse,
+    ResetPassword,
 )
 from app.schemas.usuario import UsuarioResponse
 from app.models.usuario import Usuario
@@ -139,4 +142,82 @@ async def get_current_user_profile(
             tipo_premium=current_user.tipo_premium,
             is_premium_active=current_user.is_premium_active
         )
+    )
+
+
+@router.post(
+    "/request-password-reset",
+    response_model=ResponseModel[PasswordResetResponse],
+    summary="Solicitar recuperação de senha",
+    description="Gera um token para recuperação de senha via telefone"
+)
+async def request_password_reset(
+    data: RequestPasswordReset,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Solicita recuperação de senha para um usuário.
+
+    Este endpoint será chamado pelo webhook n8n após o usuário fornecer o telefone.
+
+    - **phone**: Telefone do usuário (com código do país, apenas números)
+
+    Retorna:
+    - **token**: Token único para reset de senha (válido por 15 minutos)
+    - **expires_in_minutes**: Tempo de expiração em minutos
+
+    O token deve ser enviado para o usuário via WhatsApp no formato:
+    ```
+    https://seusite.com/reset-password?token={token}
+    ```
+
+    **Importante:**
+    - O token expira em 15 minutos
+    - Apenas um token ativo por usuário (tokens anteriores são invalidados)
+    - O telefone deve estar cadastrado no sistema
+    """
+    result = await AuthService.request_password_reset(db, data)
+
+    return ResponseModel(
+        success=True,
+        message="Token de recuperação gerado com sucesso",
+        data=result
+    )
+
+
+@router.post(
+    "/reset-password",
+    response_model=ResponseModel[None],
+    summary="Redefinir senha",
+    description="Redefine a senha do usuário usando o token de recuperação"
+)
+async def reset_password(
+    data: ResetPassword,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Redefine a senha do usuário usando o token de recuperação.
+
+    Este endpoint será chamado pela página de reset de senha do frontend.
+
+    - **token**: Token de recuperação recebido por WhatsApp
+    - **new_password**: Nova senha (mínimo 6 caracteres)
+
+    **Validações:**
+    - Token deve existir e ser válido
+    - Token não pode estar expirado (15 minutos)
+    - Token não pode ter sido usado anteriormente
+    - Nova senha deve ter pelo menos 6 caracteres
+
+    **Após sucesso:**
+    - Senha é atualizada com hash seguro (bcrypt)
+    - Token é marcado como usado (não pode ser reutilizado)
+    - Usuário pode fazer login com a nova senha
+    """
+    await AuthService.reset_password(db, data)
+
+    return ResponseModel(
+        success=True,
+        message="Senha redefinida com sucesso! Você já pode fazer login com a nova senha.",
+        data=None
     )

@@ -37,6 +37,9 @@ from app.schemas.auth import (
     UsuarioLogin,
     TokenResponse,
     UsuarioProfile,
+    RequestPasswordReset,
+    PasswordResetResponse,
+    ResetPassword,
 )
 
 __all__ = [
@@ -72,4 +75,7 @@ __all__ = [
     "UsuarioLogin",
     "TokenResponse",
     "UsuarioProfile",
+    "RequestPasswordReset",
+    "PasswordResetResponse",
+    "ResetPassword",
 ]

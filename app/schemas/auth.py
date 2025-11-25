@@ -49,3 +49,36 @@ class UsuarioProfile(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class RequestPasswordReset(BaseModel):
+    """Schema para solicitar reset de senha"""
+    phone: str = Field(..., min_length=1, description="Telefone do usuário (com código do país)")
+
+    @field_validator("phone")
+    @classmethod
+    def validate_phone(cls, v):
+        # Remove caracteres não numéricos
+        phone_clean = ''.join(filter(str.isdigit, v))
+        if len(phone_clean) < 10:
+            raise ValueError("Telefone inválido")
+        return phone_clean
+
+
+class PasswordResetResponse(BaseModel):
+    """Schema de resposta para solicitação de reset"""
+    token: str = Field(..., description="Token para reset de senha")
+    expires_in_minutes: int = Field(..., description="Tempo de expiração em minutos")
+
+
+class ResetPassword(BaseModel):
+    """Schema para redefinir senha"""
+    token: str = Field(..., min_length=1, description="Token de reset de senha")
+    new_password: str = Field(..., min_length=6, max_length=128, description="Nova senha (entre 6 e 128 caracteres)")
+
+    @field_validator("token")
+    @classmethod
+    def validate_token(cls, v):
+        if len(v.strip()) == 0:
+            raise ValueError("Token não pode ser vazio")
+        return v.strip()

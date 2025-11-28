@@ -40,6 +40,7 @@ class Gasto(Base):
             'Educação',
             'Lazer',
             'Compras',
+            'Assinaturas',
             'Outros',
             name='categorias_financeiras',
             create_type=False  # Não criar o tipo, ele já existe no banco

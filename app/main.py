@@ -12,7 +12,7 @@ from app.config import settings
 from app.database import engine, Base
 from app.middleware import LoggingMiddleware
 from app.utils.exceptions import BaseAPIException
-from app.routes import usuarios_router, gastos_router, receitas_router
+from app.routes import usuarios_router, gastos_router, receitas_router, gastos_futuros_router
 from app.routes.auth import router as auth_router
 
 
@@ -67,6 +67,13 @@ app = FastAPI(
     * Criar, listar, atualizar e deletar receitas
     * Filtrar por usuário, categoria, período e valor
     * Dashboard com estatísticas e agrupamento por categoria
+
+    ### 💳 Gastos Futuros (Cartão de Crédito)
+    * Criar, listar, atualizar e deletar gastos futuros
+    * Gerenciar parcelas de compras parceladas
+    * Marcar gastos/parcelas como pagos
+    * Dashboard com próximos vencimentos e resumo
+    * Filtrar por status, categoria, período
 
     ## Recursos
 
@@ -196,6 +203,7 @@ async def api_info():
                 "usuarios": f"{settings.API_PREFIX}/usuarios",
                 "gastos": f"{settings.API_PREFIX}/gastos",
                 "receitas": f"{settings.API_PREFIX}/receitas",
+                "gastos_futuros": f"{settings.API_PREFIX}/gastos-futuros",
             },
             "docs": "/docs",
             "redoc": "/redoc",
@@ -208,6 +216,7 @@ app.include_router(auth_router, prefix=settings.API_PREFIX)
 app.include_router(usuarios_router, prefix=settings.API_PREFIX)
 app.include_router(gastos_router, prefix=settings.API_PREFIX)
 app.include_router(receitas_router, prefix=settings.API_PREFIX)
+app.include_router(gastos_futuros_router, prefix=settings.API_PREFIX)
 
 
 if __name__ == "__main__":

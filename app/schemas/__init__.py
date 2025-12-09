@@ -41,6 +41,19 @@ from app.schemas.auth import (
     PasswordResetResponse,
     ResetPassword,
 )
+from app.schemas.gasto_futuro import (
+    GastoFuturoBase,
+    GastoFuturoCreate,
+    GastoFuturoCreateRequest,
+    GastoFuturoUpdate,
+    GastoFuturoResponse,
+    GastoFuturoDashboard,
+    ParcelaBase,
+    ParcelaCreate,
+    ParcelaUpdate,
+    ParcelaResponse,
+    MarcarComoPagoRequest,
+)
 
 __all__ = [
     # Common
@@ -78,4 +91,16 @@ __all__ = [
     "RequestPasswordReset",
     "PasswordResetResponse",
     "ResetPassword",
+    # Gasto Futuro
+    "GastoFuturoBase",
+    "GastoFuturoCreate",
+    "GastoFuturoCreateRequest",
+    "GastoFuturoUpdate",
+    "GastoFuturoResponse",
+    "GastoFuturoDashboard",
+    "ParcelaBase",
+    "ParcelaCreate",
+    "ParcelaUpdate",
+    "ParcelaResponse",
+    "MarcarComoPagoRequest",
 ]

@@ -6,5 +6,6 @@ from app.models.gasto import Gasto
 from app.models.receita import Receita
 from app.models.password_reset import PasswordResetToken
 from app.models.gasto_futuro import GastoFuturo, GastoFuturoParcela
+from app.models.cartao_credito import CartaoCredito
 
-__all__ = ["Usuario", "Gasto", "Receita", "PasswordResetToken", "GastoFuturo", "GastoFuturoParcela"]
+__all__ = ["Usuario", "Gasto", "Receita", "PasswordResetToken", "GastoFuturo", "GastoFuturoParcela", "CartaoCredito"]

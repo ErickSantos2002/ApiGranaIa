@@ -94,7 +94,8 @@ class GastoFuturoBase(BaseModel):
     valor_total: Decimal = Field(..., gt=0, description="Valor total do gasto")
     categoria: str = Field(..., min_length=1, max_length=100, description="Categoria do gasto")
     data_compra: Optional[Union[datetime, str]] = Field(None, description="Data da compra")
-    data_vencimento: Union[datetime, str] = Field(..., description="Data de vencimento do pagamento")
+    data_vencimento: Optional[Union[datetime, str]] = Field(None, description="Data de vencimento (opcional se tiver cartão)")
+    cartao_credito_id: Optional[UUID] = Field(None, description="ID do cartão de crédito (opcional)")
     numero_parcelas: int = Field(default=1, ge=1, description="Número de parcelas (1 = à vista)")
     valor_parcela: Optional[Decimal] = Field(None, gt=0, description="Valor de cada parcela")
     metodo_pagamento: Literal['credito', 'debito_futuro', 'parcelado'] = Field(
@@ -141,6 +142,13 @@ class GastoFuturoBase(BaseModel):
             raise ValueError("valor_parcela é obrigatório quando numero_parcelas > 1")
         if self.numero_parcelas > 1 and self.metodo_pagamento != 'parcelado':
             self.metodo_pagamento = 'parcelado'
+        return self
+
+    @model_validator(mode="after")
+    def validate_cartao_ou_vencimento(self):
+        """Valida que cartao_credito_id OU data_vencimento deve ser fornecido"""
+        if self.cartao_credito_id is None and self.data_vencimento is None:
+            raise ValueError("Deve fornecer cartao_credito_id OU data_vencimento")
         return self
 
 

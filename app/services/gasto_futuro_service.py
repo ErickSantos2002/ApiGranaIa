@@ -9,7 +9,7 @@ from dateutil.relativedelta import relativedelta
 from sqlalchemy import select, func, and_, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models import GastoFuturo, GastoFuturoParcela, Usuario, Gasto
+from app.models import GastoFuturo, GastoFuturoParcela, Usuario, Gasto, CartaoCredito
 from app.schemas.gasto_futuro import (
     GastoFuturoCreate,
     GastoFuturoUpdate,
@@ -54,24 +54,86 @@ class GastoFuturoService:
             if not gasto_futuro_data.valor_parcela:
                 raise BadRequestException("valor_parcela é obrigatório quando número de parcelas > 1")
 
-        # Cria o gasto futuro
-        gasto_futuro = GastoFuturo(**gasto_futuro_data.model_dump(exclude={'parcelas'}))
+        # Se cartão de crédito foi fornecido, calcula data de vencimento baseado no cartão
+        cartao = None
+        if gasto_futuro_data.cartao_credito_id:
+            stmt = select(CartaoCredito).where(CartaoCredito.id == gasto_futuro_data.cartao_credito_id)
+            result = await db.execute(stmt)
+            cartao = result.scalar_one_or_none()
+
+            if not cartao:
+                raise NotFoundException(f"Cartão de crédito com ID {gasto_futuro_data.cartao_credito_id} não encontrado")
+
+            # Calcula data de vencimento baseado no dia de vencimento do cartão
+            data_vencimento_calculada = await GastoFuturoService._calcular_vencimento_por_cartao(
+                data_compra=gasto_futuro_data.data_compra or datetime.now(),
+                dia_vencimento_cartao=cartao.dia_vencimento
+            )
+
+            # Sobrescreve data_vencimento com a calculada
+            gasto_futuro_data_dict = gasto_futuro_data.model_dump(exclude={'parcelas'})
+            gasto_futuro_data_dict['data_vencimento'] = data_vencimento_calculada
+
+            gasto_futuro = GastoFuturo(**gasto_futuro_data_dict)
+        else:
+            # Cria normalmente com data_vencimento fornecida
+            gasto_futuro = GastoFuturo(**gasto_futuro_data.model_dump(exclude={'parcelas'}))
+
         db.add(gasto_futuro)
         await db.flush()
         await db.refresh(gasto_futuro)
 
-        # Se parcelado, cria as parcelas automaticamente
-        if gasto_futuro.numero_parcelas > 1:
+        # Se parcelado OU se tem cartão (para aparecer na fatura), cria as parcelas
+        if gasto_futuro.numero_parcelas > 1 or gasto_futuro.cartao_credito_id:
+            # Para à vista, valor_parcela é o valor total
+            valor_parcela_calculado = gasto_futuro.valor_parcela if gasto_futuro.valor_parcela else gasto_futuro.valor_total
+
             await GastoFuturoService._criar_parcelas(
                 db=db,
                 gasto_futuro=gasto_futuro,
                 numero_parcelas=gasto_futuro.numero_parcelas,
-                valor_parcela=gasto_futuro.valor_parcela,
+                valor_parcela=valor_parcela_calculado,
                 data_primeira_parcela=gasto_futuro.data_vencimento
             )
 
         await db.refresh(gasto_futuro)
         return gasto_futuro
+
+    @staticmethod
+    async def _calcular_vencimento_por_cartao(
+        data_compra: datetime,
+        dia_vencimento_cartao: int
+    ) -> datetime:
+        """
+        Calcula a data de vencimento baseado no dia de vencimento do cartão
+
+        Args:
+            data_compra: Data da compra
+            dia_vencimento_cartao: Dia de vencimento do cartão (1-31)
+
+        Returns:
+            datetime: Data de vencimento calculada
+
+        Lógica:
+        - Se a compra foi antes do dia de vencimento no mês atual, vence no mês atual
+        - Se a compra foi depois do dia de vencimento, vence no próximo mês
+        """
+        # Se o dia atual é menor ou igual ao dia de vencimento, vence no mês atual
+        if data_compra.day <= dia_vencimento_cartao:
+            mes_vencimento = data_compra
+        else:
+            # Caso contrário, vence no próximo mês
+            mes_vencimento = data_compra + relativedelta(months=1)
+
+        # Ajusta para o dia de vencimento do cartão
+        try:
+            data_vencimento = mes_vencimento.replace(day=dia_vencimento_cartao)
+        except ValueError:
+            # Se o dia não existe no mês (ex: 31 em fevereiro), usa o último dia do mês
+            ultimo_dia = (mes_vencimento.replace(day=1) + relativedelta(months=1)) - timedelta(days=1)
+            data_vencimento = ultimo_dia
+
+        return data_vencimento
 
     @staticmethod
     async def _criar_parcelas(
@@ -97,12 +159,16 @@ class GastoFuturoService:
             # Calcula data de vencimento (soma meses)
             data_vencimento = data_primeira_parcela + relativedelta(months=i-1)
 
+            # Calcula mes_referencia (YYYY-MM)
+            mes_referencia = data_vencimento.strftime('%Y-%m')
+
             parcela = GastoFuturoParcela(
                 gasto_futuro_id=gasto_futuro.id,
                 numero_parcela=i,
                 total_parcelas=numero_parcelas,
                 valor_parcela=valor_parcela,
                 data_vencimento=data_vencimento,
+                mes_referencia=mes_referencia,
                 status='pendente'
             )
             parcelas.append(parcela)

@@ -54,6 +54,16 @@ from app.schemas.gasto_futuro import (
     ParcelaResponse,
     MarcarComoPagoRequest,
 )
+from app.schemas.cartao_credito import (
+    CartaoCreditoBase,
+    CartaoCreditoCreate,
+    CartaoCreditoCreateRequest,
+    CartaoCreditoUpdate,
+    CartaoCreditoResponse,
+    CartaoCreditoComGastos,
+    FaturaMensal,
+    PagarFaturaRequest,
+)
 
 __all__ = [
     # Common
@@ -103,4 +113,13 @@ __all__ = [
     "ParcelaUpdate",
     "ParcelaResponse",
     "MarcarComoPagoRequest",
+    # Cartão de Crédito
+    "CartaoCreditoBase",
+    "CartaoCreditoCreate",
+    "CartaoCreditoCreateRequest",
+    "CartaoCreditoUpdate",
+    "CartaoCreditoResponse",
+    "CartaoCreditoComGastos",
+    "FaturaMensal",
+    "PagarFaturaRequest",
 ]

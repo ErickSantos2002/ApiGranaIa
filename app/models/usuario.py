@@ -75,6 +75,12 @@ class Usuario(Base):
         cascade="all, delete-orphan",
         lazy="selectin"
     )
+    cartoes_credito = relationship(
+        "CartaoCredito",
+        back_populates="usuario_rel",
+        cascade="all, delete-orphan",
+        lazy="selectin"
+    )
 
     # Índices adicionais
     __table_args__ = (

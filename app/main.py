@@ -12,7 +12,7 @@ from app.config import settings
 from app.database import engine, Base
 from app.middleware import LoggingMiddleware
 from app.utils.exceptions import BaseAPIException
-from app.routes import usuarios_router, gastos_router, receitas_router, gastos_futuros_router
+from app.routes import usuarios_router, gastos_router, receitas_router, gastos_futuros_router, cartoes_credito_router
 from app.routes.auth import router as auth_router
 
 
@@ -217,6 +217,7 @@ app.include_router(usuarios_router, prefix=settings.API_PREFIX)
 app.include_router(gastos_router, prefix=settings.API_PREFIX)
 app.include_router(receitas_router, prefix=settings.API_PREFIX)
 app.include_router(gastos_futuros_router, prefix=settings.API_PREFIX)
+app.include_router(cartoes_credito_router, prefix=settings.API_PREFIX)
 
 
 if __name__ == "__main__":

@@ -79,6 +79,14 @@ class GastoFuturo(Base):
     # Observações
     observacoes = Column(Text, nullable=True)
 
+    # Cartão de crédito (opcional - se não tiver, usa data_vencimento manual)
+    cartao_credito_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("cartoes_credito.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True
+    )
+
     # ID do gasto criado quando marcar como pago
     gasto_id = Column(UUID(as_uuid=True), nullable=True)
 
@@ -100,6 +108,12 @@ class GastoFuturo(Base):
         "Usuario",
         back_populates="gastos_futuros",
         foreign_keys=[usuario]
+    )
+
+    cartao_credito = relationship(
+        "CartaoCredito",
+        back_populates="gastos_futuros",
+        foreign_keys=[cartao_credito_id]
     )
 
     parcelas = relationship(
@@ -158,6 +172,9 @@ class GastoFuturoParcela(Base):
     # Datas
     data_vencimento = Column(DateTime(timezone=False), nullable=False)
     data_pagamento = Column(DateTime(timezone=False), nullable=True)
+
+    # Mês de referência para agrupamento de faturas (formato YYYY-MM)
+    mes_referencia = Column(Text, nullable=True, index=True)
 
     # Status
     status = Column(
